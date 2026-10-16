@@ -76,7 +76,7 @@ T_EVAL = 2.0            # h      instante en que evaluamos
 
 # --- Créditos ---
 AUTORES = ["Benjamín Garrido", "Joaquín Cayazaya"]
-RELATOR = "Nombre Apellido"          # quien graba la voz
+RELATOR = "Benjamín Garrido"         # quien graba la voz
 DOCENTE = "Prof. Gustavo Castro P."
 ASIGNATURA = "Matemática Aplicada II (IBM121S)"
 ANIO = 2026
