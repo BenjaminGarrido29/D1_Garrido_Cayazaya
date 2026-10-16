@@ -1,0 +1,21 @@
+0.000000	2.900000	Si una función vive dentro de otra, ¿cómo se deriva?
+3.200000	7.800000	Una composición encadena dos máquinas: primero g y luego f.
+8.000000	12.400000	Entra x; g entrega u = g(x) y f entrega y = f(u).
+12.600000	16.800000	En el ejemplo, g es la función interna y f, la externa.
+17.000000	21.800000	Si x cambia un poco, ¿cuánto cambia y?
+22.000000	27.800000	Un cambio Δx en x produce en u un cambio Δu ≈ g'(x)·Δx.
+28.000000	33.800000	Ese Δu, a su vez, produce en y un cambio Δy ≈ f'(u)·Δu.
+34.000000	39.800000	Encadenando, Δy ≈ f'(u)·g'(x)·Δx: las razones se multiplican.
+40.000000	45.800000	Con rigor: Δy/Δx es igual a Δy/Δu por Δu/Δx.
+46.000000	51.800000	Como g es continua, si Δx tiende a cero, Δu también.
+52.000000	57.800000	En el límite, la derivada es f'(g(x)) por g'(x).
+58.000000	62.300000	Receta: deriva la externa y evalúala en la interna...
+62.500000	66.800000	...y multiplica por la derivada de la interna.
+67.000000	72.300000	Comprobémoslo con la secante a y = f(g(x)).
+72.500000	77.800000	Si h tiende a cero, su pendiente converge al valor de la regla.
+78.000000	82.800000	Aplicación: un fármaco se elimina según C(t) = C₀·e^(−kt).
+83.000000	87.800000	Su efecto depende de la concentración: modelo Emax.
+88.000000	93.800000	E depende de t a través de C: dE/dt = dE/dC · dC/dt.
+94.000000	97.800000	Evaluamos cada factor en el instante elegido, con unidades.
+98.000000	101.800000	El signo negativo indica que el efecto va disminuyendo.
+102.000000	109.500000	En resumen: en una composición, las razones se multiplican.

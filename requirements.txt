@@ -1,0 +1,4 @@
+# Versiones probadas (Python 3.12). No se necesita LaTeX.
+numpy==2.4.4
+matplotlib==3.10.8
+moviepy==2.2.1
