@@ -165,6 +165,7 @@ def leer_etiquetas():
     return nuevo
 
 
+GUION_PROVISORIO = GUION          # se guarda para comparar duraciones
 GUION = leer_etiquetas()
 
 # Diccionarios para buscar rápido cuándo empieza y termina cada frase: INICIO["limite"] -> 46.0
@@ -177,6 +178,14 @@ for id_frase, inicio, fin, texto in GUION:
 for id_frase, inicio, fin, texto_frase in GUION:      # pauta: subtítulos de máximo 2 líneas
     if len(texto_frase) > 66:
         print(f"[aviso] el subtítulo '{id_frase}' es largo: podría ocupar más de 2 líneas")
+
+# Si una frase grabada es más corta que la provisoria, sus animaciones se aceleran
+# en la misma proporción: así todo alcanza a aparecer aunque se hable más rápido.
+ESCALA_TIEMPO = {}
+for i in range(len(GUION)):
+    duracion_real = GUION[i][2] - GUION[i][1]
+    duracion_provisoria = GUION_PROVISORIO[i][2] - GUION_PROVISORIO[i][1]
+    ESCALA_TIEMPO[GUION[i][0]] = min(1.0, duracion_real / duracion_provisoria)
 
 FIN_CORTINA = min(3.0, INICIO["maquinas"])        # la cortina dura máximo 3 s
 INICIO_CREDITOS = FIN["sintesis"] + 0.4
@@ -262,7 +271,7 @@ def igual_o_aprox(valor, decimales=2):
 
 def opacidad(id_frase, t, retraso=0.0):
     """0 antes de que empiece la frase (+retraso); sube a 1 en medio segundo."""
-    segundos = t - INICIO[id_frase] - retraso
+    segundos = t - INICIO[id_frase] - retraso * ESCALA_TIEMPO[id_frase]
     if segundos <= 0:
         return 0.0
     if segundos >= 0.5:
@@ -272,7 +281,8 @@ def opacidad(id_frase, t, retraso=0.0):
 
 def progreso(id_frase, t, retraso=0.0, duracion=1.0):
     """Avance de una animación: 0 al empezar, 1 al terminar (con frenado suave)."""
-    p = (t - INICIO[id_frase] - retraso) / duracion
+    escala = ESCALA_TIEMPO[id_frase]
+    p = (t - INICIO[id_frase] - retraso * escala) / (duracion * escala)
     if p < 0:
         p = 0.0
     if p > 1:
