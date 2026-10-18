@@ -45,6 +45,10 @@ python D1_Garrido_Cayazaya.py            # video final en 1080x1920 (~4 min)
 
 Para cambiar el ejemplo hay que editar las cuatro funciones (`g`, `dg`, `f`, `df`) y sus textos (`TEXTO_G`, etc.). El programa comprueba que `dg` y `df` sean realmente las derivadas comparándolas con el cociente incremental. Si hay un error, avisa y se detiene.
 
+`PAUSAS` y `PAUSA_SINTESIS` agregan segundos de silencio al final de cada escena (solo cuando hay `etiquetas.txt`), para que las animaciones alcancen a verse. El programa inserta ese silencio en la voz y corre los tiempos de las frases siguientes.
+
+Música de fondo (opcional): si existe `musica.mp3` en la carpeta, se mezcla bajo la voz al volumen `VOLUMEN_MUSICA`, con entrada y salida suaves. Debe ser libre de derechos y citarse en `CREDITO_MUSICA` (lista de líneas que aparecen en los créditos). Música usada: «Infographic Tutorial Explainer Background Music», de HitsLab (Pixabay, Licencia de contenido de Pixabay).
+
 También se pueden cambiar `X0`, `DX_INICIAL`, `DX_FINAL`, `H_INICIAL`, `H_FINAL` y los datos del fármaco (`C0`, `K`, `EMAX`, `EC50`, `T_EVAL`).
 
 ## Aplicación

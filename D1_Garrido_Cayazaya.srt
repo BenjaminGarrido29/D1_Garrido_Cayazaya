@@ -1,84 +1,84 @@
 1
-00:00:00,000 --> 00:00:02,900
+00:00:00,000 --> 00:00:02,583
 Si una función vive dentro de otra, ¿cómo se deriva?
 
 2
-00:00:03,200 --> 00:00:07,800
+00:00:02,707 --> 00:00:06,315
 Una composición encadena dos máquinas: primero g y luego f.
 
 3
-00:00:08,000 --> 00:00:12,400
+00:00:06,443 --> 00:00:11,519
 Entra x; g entrega u = g(x) y f entrega y = f(u).
 
 4
-00:00:12,600 --> 00:00:16,800
+00:00:12,196 --> 00:00:14,850
 En el ejemplo, g es la función interna y f, la externa.
 
 5
-00:00:17,000 --> 00:00:21,800
+00:00:16,870 --> 00:00:19,966
 Si x cambia un poco, ¿cuánto cambia y?
 
 6
-00:00:22,000 --> 00:00:27,800
+00:00:20,009 --> 00:00:25,597
 Un cambio Δx en x produce en u un cambio Δu ≈ g'(x)·Δx.
 
 7
-00:00:28,000 --> 00:00:33,800
+00:00:26,128 --> 00:00:32,932
 Ese Δu, a su vez, produce en y un cambio Δy ≈ f'(u)·Δu.
 
 8
-00:00:34,000 --> 00:00:39,800
+00:00:33,517 --> 00:00:40,849
 Encadenando, Δy ≈ f'(u)·g'(x)·Δx: las razones se multiplican.
 
 9
-00:00:40,000 --> 00:00:45,800
+00:00:41,225 --> 00:00:47,638
 Con rigor: Δy/Δx es igual a Δy/Δu por Δu/Δx.
 
 10
-00:00:46,000 --> 00:00:51,800
+00:00:48,905 --> 00:00:53,154
 Como g es continua, si Δx tiende a cero, Δu también.
 
 11
-00:00:52,000 --> 00:00:57,800
+00:00:54,849 --> 00:00:59,713
 En el límite, la derivada es f'(g(x)) por g'(x).
 
 12
-00:00:58,000 --> 00:01:02,300
+00:00:59,901 --> 00:01:02,815
 Receta: deriva la externa y evalúala en la interna...
 
 13
-00:01:02,500 --> 00:01:06,800
+00:01:02,970 --> 00:01:05,620
 ...y multiplica por la derivada de la interna.
 
 14
-00:01:07,000 --> 00:01:12,300
+00:01:07,370 --> 00:01:11,482
 Comprobémoslo con la secante a y = f(g(x)).
 
 15
-00:01:12,500 --> 00:01:17,800
+00:01:11,682 --> 00:01:15,263
 Si h tiende a cero, su pendiente converge al valor de la regla.
 
 16
-00:01:18,000 --> 00:01:22,800
+00:01:17,077 --> 00:01:22,302
 Aplicación: un fármaco se elimina según C(t) = C₀·e^(−kt).
 
 17
-00:01:23,000 --> 00:01:27,800
+00:01:23,026 --> 00:01:25,490
 Su efecto depende de la concentración: modelo Emax.
 
 18
-00:01:28,000 --> 00:01:33,800
+00:01:26,127 --> 00:01:34,675
 E depende de t a través de C: dE/dt = dE/dC · dC/dt.
 
 19
-00:01:34,000 --> 00:01:37,800
+00:01:35,280 --> 00:01:37,597
 Evaluamos cada factor en el instante elegido, con unidades.
 
 20
-00:01:38,000 --> 00:01:41,800
+00:01:38,371 --> 00:01:40,941
 El signo negativo indica que el efecto va disminuyendo.
 
 21
-00:01:42,000 --> 00:01:49,500
+00:01:42,510 --> 00:01:45,411
 En resumen: en una composición, las razones se multiplican.
 

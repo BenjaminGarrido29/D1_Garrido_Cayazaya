@@ -26,7 +26,7 @@ matplotlib.use("Agg")                       # dibujar sin abrir ventanas
 import matplotlib.pyplot as plt
 matplotlib.rcParams["mathtext.fontset"] = "cm"   # fórmulas con letra matemática (sin instalar LaTeX)
 from matplotlib.patches import FancyBboxPatch
-from moviepy import VideoClip, AudioFileClip  # armar el video
+from moviepy import VideoClip, AudioFileClip, AudioArrayClip, CompositeAudioClip, concatenate_audioclips, afx
 
 
 # ════════════════════════════════════════════════════════════════════════════
@@ -80,8 +80,14 @@ RELATOR = "Benjamín Garrido"         # quien graba la voz
 DOCENTE = "Prof. Gustavo Castro P."
 ASIGNATURA = "Matemática Aplicada II (IBM121S)"
 ANIO = 2026
-RECURSOS = ["Logos: Facultad de Ingeniería y", "Facultad de Medicina CAS-UDD (Canvas)", "Música: sin música",
-            "Gráficos: Matplotlib · Montaje: MoviePy"]
+# --- Música de fondo (opcional): debe ser libre de derechos y citarse en los créditos ---
+MUSICA = "musica.mp3"                 # si este archivo no existe, el video sale sin música
+VOLUMEN_MUSICA = 0.04                 # 0.04 = 4 % del volumen original (que no tape la voz)
+CREDITO_MUSICA = ["Música: «Infographic Tutorial Explainer",     # lista de líneas para que quepa
+                  "Background Music» de HitsLab (Pixabay)"]    # sin música: ["Música: sin música"]
+
+RECURSOS = (["Logos: Facultad de Ingeniería y", "Facultad de Medicina CAS-UDD (Canvas)"]
+            + CREDITO_MUSICA + ["Gráficos: Matplotlib · Montaje: MoviePy"])
 
 # --- Archivos ---
 NOMBRE = "D1_Garrido_Cayazaya"
@@ -93,6 +99,14 @@ LOGO_CARRERA = "assets/logo_carrera.png"     # Facultad de Medicina CAS-UDD
 # --- Video ---
 FPS = 30
 DUR_CREDITOS = 7.0      # segundos
+# Silencio extra (s) que se agrega después de estas frases, al final de cada escena,
+# para que el espectador alcance a ver la animación antes de que cambie la pantalla.
+PAUSAS = {"ejemplo": 2.0, "limite": 1.5, "receta2": 1.5, "converge": 1.5, "interpretar": 1.5}
+PAUSA_SINTESIS = 3.0    # s extra en la pantalla de síntesis, antes de los créditos
+# Si una pausa corta una palabra, escribe aquí el segundo exacto del audio (narracion.wav)
+# donde debe ir el silencio. Se mira en Audacity: clic en el silencio y leer "Selección".
+# Ejemplo: CORTES_MANUALES = {"ejemplo": 15.25}
+CORTES_MANUALES = {"ejemplo": 14.85}
 MODO_RAPIDO = "--rapido" in sys.argv     # True si escribimos --rapido en la terminal
 if MODO_RAPIDO:
     DPI = 50            # 540 x 960
@@ -165,8 +179,43 @@ def leer_etiquetas():
     return nuevo
 
 
+def agregar_pausas(guion):
+    """Deja silencio extra después de las frases de PAUSAS, para que las animaciones
+    del final de cada escena alcancen a verse. Corre los tiempos de las frases que
+    siguen y devuelve también los 'cortes': dónde insertar silencio en el audio."""
+    nuevo = []
+    cortes = []
+    corrimiento = 0.0
+    for i in range(len(guion)):
+        id_frase, inicio, fin, texto = guion[i]
+        nuevo.append((id_frase, inicio + corrimiento, fin + corrimiento, texto))
+        if id_frase in PAUSAS:
+            manual = id_frase in CORTES_MANUALES
+            if manual:
+                corte = CORTES_MANUALES[id_frase]        # el segundo que eligieron ustedes
+            elif i + 1 < len(guion):
+                corte = (fin + guion[i + 1][1]) / 2      # en medio del silencio entre frases
+            else:
+                corte = fin
+            cortes.append((corte, PAUSAS[id_frase], manual))
+            corrimiento = corrimiento + PAUSAS[id_frase]
+    return nuevo, cortes
+
+
+def siguiente_inicio(guion, i, fin_total):
+    """Segundo en que empieza la frase siguiente a la i (o el final, si es la última)."""
+    if i + 1 < len(guion):
+        return guion[i + 1][1]
+    return fin_total
+
+
 GUION_PROVISORIO = GUION          # se guarda para comparar duraciones
 GUION = leer_etiquetas()
+CORTES = []                       # silencios a insertar en la voz: (segundo, duración)
+PAUSA_FINAL = 0.0
+if os.path.exists(ETIQUETAS):     # las pausas solo se usan con la voz real
+    GUION, CORTES = agregar_pausas(GUION)
+    PAUSA_FINAL = PAUSA_SINTESIS
 
 # Diccionarios para buscar rápido cuándo empieza y termina cada frase: INICIO["limite"] -> 46.0
 INICIO = {}
@@ -179,20 +228,22 @@ for id_frase, inicio, fin, texto_frase in GUION:      # pauta: subtítulos de m�
     if len(texto_frase) > 66:
         print(f"[aviso] el subtítulo '{id_frase}' es largo: podría ocupar más de 2 líneas")
 
-# Si una frase grabada es más corta que la provisoria, sus animaciones se aceleran
-# en la misma proporción: así todo alcanza a aparecer aunque se hable más rápido.
-ESCALA_TIEMPO = {}
-for i in range(len(GUION)):
-    duracion_real = GUION[i][2] - GUION[i][1]
-    duracion_provisoria = GUION_PROVISORIO[i][2] - GUION_PROVISORIO[i][1]
-    ESCALA_TIEMPO[GUION[i][0]] = min(1.0, duracion_real / duracion_provisoria)
-
 FIN_CORTINA = min(3.0, INICIO["maquinas"])        # la cortina dura máximo 3 s
-INICIO_CREDITOS = FIN["sintesis"] + 0.4
+INICIO_CREDITOS = FIN["sintesis"] + 0.4 + PAUSA_FINAL
 DURACION = INICIO_CREDITOS + DUR_CREDITOS
 if DURACION > 120:
     print(f"[ERROR] El video dura {DURACION:.1f} s y el máximo es 120 s.")
     sys.exit()
+
+# Cada frase tiene una "ventana": desde que empieza hasta que empieza la siguiente
+# (incluye el silencio de después). Si la ventana real es más corta que la provisoria,
+# sus animaciones se aceleran en la misma proporción para que todo alcance a aparecer.
+ESCALA_TIEMPO = {}
+fin_provisorio = GUION_PROVISORIO[-1][2] + 0.4
+for i in range(len(GUION)):
+    ventana_real = siguiente_inicio(GUION, i, INICIO_CREDITOS) - GUION[i][1]
+    ventana_provisoria = siguiente_inicio(GUION_PROVISORIO, i, fin_provisorio) - GUION_PROVISORIO[i][1]
+    ESCALA_TIEMPO[GUION[i][0]] = min(1.0, ventana_real / ventana_provisoria)
 
 
 # ════════════════════════════════════════════════════════════════════════════
@@ -721,15 +772,68 @@ def escribir_srt():
     print(f"[srt] {NOMBRE}.srt")
 
 
+def punto_silencioso(muestras, fps, centro, radio=0.15):
+    """Busca el instante más silencioso cerca de 'centro' (±0,15 s), para no cortar
+    una palabra por la mitad. Revisa trocitos de 30 ms y se queda con el de menor energía."""
+    ancho = int(0.03 * fps)
+    mejor_t = centro
+    mejor_energia = None
+    t = centro - radio
+    while t <= centro + radio:
+        i = int(t * fps)
+        if i >= 0 and i + ancho < len(muestras):
+            energia = np.mean(muestras[i:i + ancho] ** 2)
+            if mejor_energia is None or energia < mejor_energia:
+                mejor_energia = energia
+                mejor_t = t + 0.015          # centro del trocito más silencioso
+        t = t + 0.01
+    return mejor_t
+
+
+def voz_con_pausas(voz):
+    """Corta la voz en los puntos de CORTES y pone silencio entre los trozos."""
+    if len(CORTES) == 0:
+        return voz
+    muestras = voz.to_soundarray(fps=voz.fps)        # la voz como lista de números
+    piezas = []
+    anterior = 0.0
+    for corte, pausa, manual in CORTES:
+        if not manual:                                # los manuales se respetan tal cual
+            corte = punto_silencioso(muestras, voz.fps, corte)
+        corte = min(corte, voz.duration)
+        piezas.append(voz.subclipped(anterior, corte))
+        silencio = np.zeros((int(pausa * voz.fps), voz.nchannels))
+        piezas.append(AudioArrayClip(silencio, fps=voz.fps))
+        anterior = corte
+    piezas.append(voz.subclipped(anterior, voz.duration))
+    return concatenate_audioclips(piezas)
+
+
 def crear_video():
     video = VideoClip(frame_function=cuadro_en, duration=DURACION)
+    pistas = []                                      # pistas de audio que se mezclan
     if os.path.exists(AUDIO):
-        voz = AudioFileClip(AUDIO)
+        voz = voz_con_pausas(AudioFileClip(AUDIO))
+        # Normalizar: sube la voz hasta su volumen máximo sin distorsionar
+        # (útil si se grabó bajito) y la deja al 90 % para dejar espacio a la música.
+        voz = voz.with_effects([afx.AudioNormalize(), afx.MultiplyVolume(0.9)])
         if voz.duration > DURACION:
             voz = voz.subclipped(0, DURACION)
-        video = video.with_audio(voz)
+        pistas.append(voz)
     else:
         print(f"[aviso] no se encontró {AUDIO}: el video sale sin voz")
+    if os.path.exists(MUSICA):
+        musica = AudioFileClip(MUSICA)
+        if musica.duration >= DURACION:
+            musica = musica.subclipped(0, DURACION)
+        else:
+            musica = musica.with_effects([afx.AudioLoop(duration=DURACION)])   # repetir hasta el final
+        musica = musica.with_effects([afx.MultiplyVolume(VOLUMEN_MUSICA),
+                                      afx.AudioFadeIn(1.5), afx.AudioFadeOut(3.0)])
+        pistas.append(musica)
+        print(f"[audio] música de fondo: {MUSICA} al {int(VOLUMEN_MUSICA * 100)} %")
+    if len(pistas) > 0:
+        video = video.with_audio(CompositeAudioClip(pistas))
     salida = NOMBRE + ("_rapido" if MODO_RAPIDO else "") + ".mp4"
     video.write_videofile(salida, fps=FPS, codec="libx264", audio_codec="aac",
                           ffmpeg_params=["-pix_fmt", "yuv420p"])
